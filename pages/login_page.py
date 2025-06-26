@@ -22,13 +22,14 @@ class LoginPage:
         self.driver.find_element(*self.PASSWORD_INPUT).send_keys(password)
         wait.until(EC.element_to_be_clickable(self.LOGIN_BUTTON)).click()
 
-    def should_see_username(self, expected_name: str = "testpharm4 test", timeout: int = 30):
-        """Проверка, что имя пользователя отображается после входа"""
-        username_locator = (By.XPATH, f"//*[contains(text(), '{expected_name}')]")
+    def should_see_username(self, expected_name: str = "test pharm4", timeout: int = 60):
+        """Проверка, что имя пользователя отображается в блоке #username"""
+        name_locator = (By.CSS_SELECTOR, "#username > div:first-child")
         element = WebDriverWait(self.driver, timeout).until(
-            EC.visibility_of_element_located(username_locator)
+            EC.visibility_of_element_located(name_locator)
         )
-        assert expected_name in element.text, f"Expected to see '{expected_name}', but saw '{element.text}'"
+        actual = element.text.strip()
+        assert actual == expected_name, f"Expected username '{expected_name}', but got '{actual}'"
 
     def logout(self):
         """Простейший выход — можно улучшить при наличии UI-кнопки logout"""
