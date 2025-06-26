@@ -1,30 +1,46 @@
 import pytest
 import allure
+
+from pages.base_page import BasePage
 from pages.pharmacy_group_page import PharmacyGroupPage
 
 
 @allure.suite("Management tests")
 @allure.feature("Pharmacy groups")
 @allure.title("User can't Delete Default pharmacy group")
-def test_cannot_delete_default_group(driver):
+def test_cannot_delete_default_group(driver, login):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
-    page.open_default_group()
+    page.open_group(name="sarah test group")
     page.should_not_see_delete_button()
     page.should_not_see_delete_icon_near_pharmacies()
 
 
 @allure.title("Change default group")
-def test_change_default_pharmacy_group(driver):
+def test_change_default_pharmacy_group(driver, login):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
-    page.open()
+    page.open_group(name="Alfa Pharmacy Group First")
     page.mark_as_default()
     page.save_changes()
-    page.should_be_default()
-    page.previous_default_should_not_be_default()
+    page.should_see_notification_message()
+    page.should_see_default_group_label()
+    base.open("pharmacyGroups")
+    page.open_group(name="sarah test group")
+    page.mark_as_default()
+    page.save_changes()
+    page.should_see_notification_message()
 
 
 @allure.title("Delete pharmacy group")
 def test_delete_pharmacy_group(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
     page.navigate_to_groups()
     page.open()
@@ -34,6 +50,9 @@ def test_delete_pharmacy_group(driver):
 
 @allure.title("Group becomes default after deleting current group")
 def test_group_becomes_default_after_deletion(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
     page.open()
     page.add_pharmacy("Pharmacy 1")
@@ -43,6 +62,9 @@ def test_group_becomes_default_after_deletion(driver):
 
 @allure.title("Search for pharmacy group")
 def test_search_pharmacy_group(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
     page.open_section()
     page.search("Group A")
@@ -53,6 +75,9 @@ def test_search_pharmacy_group(driver):
 
 @allure.title("Create pharmacy group")
 def test_create_pharmacy_group(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
     page.open()
     page.create_group("New Group", pharmacies=["Pharmacy A", "Pharmacy B"])
@@ -61,6 +86,9 @@ def test_create_pharmacy_group(driver):
 
 @allure.title("Change Pharmacy Group for pharmacy")
 def test_change_group_for_pharmacy(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
     page.open()
     page.add_pharmacy_from_other_group("Pharmacy X")
@@ -70,6 +98,9 @@ def test_change_group_for_pharmacy(driver):
 
 @allure.title("Group becomes default after removing last pharmacy")
 def test_group_becomes_default_after_removing_last_pharmacy(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
     page.open()
     page.add_pharmacy("Pharmacy 1")
@@ -80,8 +111,10 @@ def test_group_becomes_default_after_removing_last_pharmacy(driver):
 
 @allure.title("Delete pharmacy from group")
 def test_delete_pharmacy_from_group(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
-    page.open()
     page.delete_pharmacy("Pharmacy Y")
     page.go_back()
     page.open_again()
@@ -90,8 +123,10 @@ def test_delete_pharmacy_from_group(driver):
 
 @allure.title("Edit pharmacy group")
 def test_edit_pharmacy_group(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
-    page.open()
     page.delete_pharmacy("Old Pharmacy")
     page.add_pharmacy("Pharmacy A")
     page.add_pharmacy("Pharmacy B")
@@ -102,8 +137,10 @@ def test_edit_pharmacy_group(driver):
 
 @allure.title("Create default pharmacy group and link pharmacy")
 def test_create_default_pharmacy_group(driver):
+    base = BasePage(login.driver)
+    base.open("pharmacyGroups")
+
     page = PharmacyGroupPage(driver)
-    page.open()
     page.set_as_default()
     page.go_to_pharmacies()
     page.create_pharmacy("New Pharmacy")
