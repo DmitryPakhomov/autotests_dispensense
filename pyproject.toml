@@ -2,7 +2,7 @@
 name = "ui-automation"
 version = "0.1.0"
 description = "UI test automation with Selenium, Pytest, Allure"
-authors = [{ name = "Dmitry Pakhomov", email = "you@example.com" }]
+authors = [{ name = "Dmitry Pakhomov", email = "fotosymbol@gmail.com" }]
 requires-python = ">=3.9"
 
 dependencies = [

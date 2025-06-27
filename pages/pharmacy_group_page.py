@@ -1,3 +1,6 @@
+import time
+
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,8 +11,13 @@ class PharmacyGroupPage:
     ADD_GROUP_BUTTON = (By.ID, "addPharmacyGroupButton")
     DELETE_GROUP_BUTTON = (By.ID, "deleteButton")
     GROUP_NAME_INPUT = (By.ID, "pharmacyGroupName")
+    GROUP_NAME_INPUT_CREATE = (By.XPATH, "//label[contains(text(), 'Group Name')]/following-sibling::input")
+    GROUP_INPUT_WRAPPER = (By.CSS_SELECTOR, "div.v-input input#pharmacyGroupName")
     ADD_PHARMACY_BUTTON = (By.ID, "addPharmacyButton")
     CHANGE_GROUP_CONFIRM_BUTTON = (By.ID, "changePharmacyGroupDialogChangeButton")
+    DELETE_CONFIRM_BUTTON = (By.ID, "commonDialogOkButton")
+
+
 
     def __init__(self, driver):
         self.driver = driver
@@ -19,6 +27,15 @@ class PharmacyGroupPage:
         field = self.wait.until(EC.visibility_of_element_located(self.SEARCH_FIELD))
         field.clear()
         field.send_keys(group_name)
+        time.sleep(2)
+
+    def should_show_result(self, name: str):
+        """
+        Проверка, что в результатах поиска отображается группа с указанным именем
+        """
+        locator = (By.XPATH, f"//div[starts-with(@id, 'pharmacyGroupName_')]/div[contains(text(), '{name}')]")
+        element = self.wait.until(EC.visibility_of_element_located(locator))
+        assert name in element.text, f"Expected to see group '{name}' in results, but saw '{element.text}'"
 
     def select_result(self, index: int = 0):
         locator = (By.ID, f"pharmacyGroupName_{index}")
@@ -31,9 +48,14 @@ class PharmacyGroupPage:
 
     def create_group(self, name: str):
         self.wait.until(EC.element_to_be_clickable(self.ADD_GROUP_BUTTON)).click()
-        input_field = self.wait.until(EC.visibility_of_element_located(self.GROUP_NAME_INPUT))
-        input_field.send_keys(name)
+
+        # Ждём появления input внутри v-input
+        input_field = self.wait.until(
+            EC.presence_of_element_located(self.GROUP_INPUT_WRAPPER)
+        )
+        self.clear_and_type(input_field, name)
         self.save_changes()
+        time.sleep(4)
 
     def save_changes(self):
         save_btn = self.wait.until(EC.element_to_be_clickable((By.ID, "saveButton")))
@@ -43,13 +65,40 @@ class PharmacyGroupPage:
         delete_btn = self.wait.until(EC.element_to_be_clickable(self.DELETE_GROUP_BUTTON))
         delete_btn.click()
 
+    def delete_group_dialog(self):
+        delete_btn = self.wait.until(EC.element_to_be_clickable(self.DELETE_CONFIRM_BUTTON))
+        delete_btn.click()
+
     def add_pharmacy(self, pharmacy_name: str):
         self.wait.until(EC.element_to_be_clickable(self.ADD_PHARMACY_BUTTON)).click()
         search_field = self.wait.until(EC.visibility_of_element_located(self.SEARCH_FIELD))
         search_field.clear()
         search_field.send_keys(pharmacy_name)
-        first_result = (By.ID, "pharmacyGroupName_0")
-        self.wait.until(EC.element_to_be_clickable(first_result)).click()
+        time.sleep(4)
+
+        rows = self.driver.find_elements(By.XPATH, "//tr[contains(@class, 'v-data-table__tr')]")
+        print(f"Found {len(rows)} rows")
+
+        for row in rows:
+            print("ROW TEXT:", row.text)
+        self.driver.execute_script("arguments[0].click();", row)
+
+        self.wait.until(EC.element_to_be_clickable(self.CHANGE_GROUP_CONFIRM_BUTTON)).click()
+
+    def delete_pharmacy(self, pharmacy_name: str):
+        """
+        Удаляет аптеку по имени, нажав на иконку удаления в строке таблицы
+        """
+        # Находим строку с нужным названием аптеки
+        row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//div[contains(text(), '{pharmacy_name}')]/ancestor::tr"
+
+        row = self.wait.until(EC.presence_of_element_located((By.XPATH, row_xpath)))
+
+        # Внутри найденной строки находим кнопку с иконкой удаления
+        delete_button = row.find_element(By.XPATH, ".//button[starts-with(@id, 'deletePharmacyButton')]")
+
+        # Нажимаем
+        delete_button.click()
 
     def confirm_change_group(self):
         self.wait.until(EC.element_to_be_clickable(self.CHANGE_GROUP_CONFIRM_BUTTON)).click()
@@ -119,3 +168,59 @@ class PharmacyGroupPage:
         )
         actual = element.text.strip()
         assert expected in actual, f"Expected '{expected}' in default group label, but got '{actual}'"
+
+
+    def should_not_see_group(self, name: str):
+        """
+        Проверка, что группа с указанным именем отсутствует в списке
+        """
+        results = self.driver.find_elements(By.XPATH, f"//div[starts-with(@id, 'pharmacyGroupName_')]//div[contains(text(), '{name}')]")
+        visible = [el for el in results if el.is_displayed()]
+        assert not visible, f"Expected group '{name}' to be deleted, but it's still visible"
+
+    def clear_and_type(self, element, value: str):
+        """Очистить поле ввода и ввести новое значение"""
+        element.click()  # Активировать фокус
+        element.send_keys(Keys.CONTROL + "a")
+        element.send_keys(Keys.BACKSPACE)
+        element.send_keys(value)
+
+    def delete_group_by_name(self, name: str):
+        """
+        Удаляет группу по имени: ищет, выбирает, удаляет и подтверждает
+        """
+        self.search(name)
+        self.should_show_result(name)
+        self.select_result()
+        self.delete_group()
+        self.delete_group_dialog()
+
+    def should_be_default_group(self, pharmacy_name: str):
+        """
+        Проверяет, что указанная аптека отображается в списке — как часть дефолтной группы
+        """
+        xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td//div[contains(text(), '{pharmacy_name}')]"
+        element = self.wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        assert pharmacy_name in element.text, f"Expected '{pharmacy_name}' in default group, but saw '{element.text}'"
+
+    def should_see_pharmacy(self, pharmacy_names: list[str]):
+        """
+        Проверяет, что все указанные аптеки присутствуют в таблице на странице.
+        """
+        for name in pharmacy_names:
+            xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td//div[contains(text(), '{name}')]"
+            element = self.wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            assert name in element.text, f"Pharmacy '{name}' not found on the page. Found text: '{element.text}'"
+
+    def should_not_see_pharmacy(self, pharmacy_name: str):
+        """
+        Проверяет, что аптека с указанным именем отсутствует в таблице.
+        """
+        xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td//div[contains(text(), '{pharmacy_name}')]"
+        elements = self.driver.find_elements(By.XPATH, xpath)
+        assert len(elements) == 0, f"Pharmacy '{pharmacy_name}' was found on the page, but shouldn't be."
+
+
+    def refresh(self):
+        """Обновляет текущую страницу"""
+        self.driver.refresh()

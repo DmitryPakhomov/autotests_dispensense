@@ -1,5 +1,3 @@
-import time
-
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -7,11 +5,25 @@ from utils.config import LOGIN, PASSWORD
 from pages.login_page import LoginPage
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--headed",
+        action="store_true",
+        default=False,
+        help="Run tests with browser UI (headed mode)"
+    )
+
+
 @pytest.fixture(scope="function")
-def driver():
+def driver(request):
+    # Получаем значение флага --headed
+    headed = request.config.getoption("--headed")
+
     options = Options()
-    #options.add_argument("--headless=new")  # для безголового запуска браузера
+    if not headed:
+        options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
+
     driver = webdriver.Chrome(options=options)
     driver.implicitly_wait(1)
     yield driver
