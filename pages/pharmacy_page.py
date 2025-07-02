@@ -407,3 +407,16 @@ class PharmacyPage:
         employee_row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]"
         self.wait.until(EC.visibility_of_element_located((By.XPATH, employee_row_xpath)),
                         message=f"Сотрудник с email '{email}' не найден в списке")
+
+
+    def delete_employee(self, email: str):
+        """Удаляет сотрудника с указанным email"""
+        # Найти строку сотрудника по email
+        row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]/parent::tr"
+        employee_row = self.wait.until(EC.visibility_of_element_located((By.XPATH, row_xpath)))
+
+        # Найти кнопку удаления внутри этой строки
+        delete_button = employee_row.find_element(By.XPATH, ".//button[starts-with(@id, 'removeEmployeeButton')]")
+
+        # Клик по кнопке удаления
+        delete_button.click()

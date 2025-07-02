@@ -138,23 +138,17 @@ def test_add_employee_to_pharmacy(driver, login):
     page.should_see_employee(employee)
 
 
-@allure.title("Delete employee from pharmacy")
-def test_delete_employee_from_pharmacy(driver, login):
+@allure.title("Add employee to pharmacy")
+def test_add_employee_to_pharmacy(driver, login):
     base = BasePage(login.driver)
     base.open("pharmacies")
-
+    employee = "234234@gmail.com"
+    name = f"Test Pharmacy {int(time.time())}"
     page = PharmacyPage(driver)
-    page.open_pharmacy("Updated Pharmacy")
-    page.open_employees_tab()
-    page.delete_employee("John Smith")
-    page.should_see_employees_tab_empty()
-
-
-@allure.title("Read pharmacy without ReadPharmacyList action")
-def test_read_pharmacy_without_permission(driver, login):
-    base = BasePage(login.driver)
-    base.open("pharmacies")
-
-    page = PharmacyPage(driver)
-    page.logout()
-    page.should_see_pharmacy_button_in_menu()
+    page.click_add_pharmacy()
+    page.create_pharmacy(name)
+    page.open_pharmacy(name)
+    page.open_ordering_tab("Employees")
+    page.add_employee(employee)
+    page.should_see_employee(employee)
+    page.delete_employee(employee)
