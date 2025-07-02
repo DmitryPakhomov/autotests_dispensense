@@ -181,7 +181,7 @@ class PharmacyPage:
         assert expected_text in notification.text, f"Expected '{expected_text}', got '{notification.text}'"
 
     def create_pharmacy(self, name: str, data: dict = pharmacy_data):
-        """Заполняет форму создания аптеки и сохраняет"""
+        """Fill out the pharmacy creation form and save"""
         self.clear_and_type(self.driver.find_element(*self.NAME_INPUT), name)
         self.clear_and_type(self.driver.find_element(*self.ADDRESS_LINE1_INPUT), data["address_line1"])
         self.clear_and_type(self.driver.find_element(*self.ADDRESS_LINE2_INPUT), data["address_line2"])
@@ -195,14 +195,14 @@ class PharmacyPage:
         self.driver.find_element(*self.SAVE_BUTTON).click()
 
     def clear_and_type(self, element, value: str):
-        """Очистить поле ввода и ввести новое значение"""
-        element.click()  # Активировать фокус
+        """Clear the input field and enter a new value"""
+        element.click()  # Activate focus
         element.send_keys(Keys.CONTROL + "a")
         element.send_keys(Keys.BACKSPACE)
         element.send_keys(value)
 
     def fill_random_qty_fields(self):
-        """Заполнить все поля с суффиксом 'Qty' случайными значениями 0 или 1."""
+        """Fill all fields with the 'Qty' suffix with random values 0 or 1."""
         qty_inputs = self.driver.find_elements(By.XPATH, "//label[contains(text(), 'Qty')]/following-sibling::input")
         for input_element in qty_inputs:
             value = str(random.randint(0, 1))
@@ -210,7 +210,7 @@ class PharmacyPage:
 
     def open_pharmacy(self, name: str = "Alfa Pharmacy 1"):
         """
-        Найти и кликнуть по Аптеке с заданным названием
+        Find and click a pharmacy with the specified name
         """
         group_locator = (By.XPATH, "//div[starts-with(@id, 'pharmacyName_')]")
         elements = self.wait.until(EC.presence_of_all_elements_located(group_locator))
@@ -229,23 +229,23 @@ class PharmacyPage:
     def select_from_dropdown(self, input_id: str, option_text: str, timeout: int = 10):
         wait = WebDriverWait(self.driver, timeout)
 
-        # 1. Находим обёртку v-select по ID input-поля
+        # 1. Find the v-select wrapper using the input field ID
         field_wrapper_xpath = f'//input[@id="{input_id}"]/ancestor::div[contains(@class, "v-select")]'
         field_wrapper = wait.until(EC.presence_of_element_located((By.XPATH, field_wrapper_xpath)))
 
-        # 2. Скроллим и кликаем по выпадающему списку (по обёртке)
+        # 2. Scroll to and click the dropdown list (the wrapper)
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", field_wrapper)
         ActionChains(self.driver).move_to_element(field_wrapper).pause(0.3).click().perform()
 
-        # 3. Подождать появления dropdown-меню
-        # Vuetify вставляет меню в конец body как <ul role="listbox"> или <div role="listbox">
+        # 3. Wait for the dropdown menu to appear
+        # Vuetify inserts the menu at the end of the body as <ul role="listbox"> or <div role="listbox">
         option_xpath = f'//div[@role="listbox"]//div[contains(@class, "v-list-item-title") and normalize-space(text())="{option_text}"]'
 
         try:
             option = wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
             option.click()
         except Exception as e:
-            # debug fallback: выводим весь body если не найден элемент
+            # Debug fallback: print the entire body if the element was not found
             print("Dropdown option not found or not clickable. Trying fallback click.")
             print(self.driver.page_source)
             raise e
@@ -255,32 +255,32 @@ class PharmacyPage:
         name_input = self.wait.until(EC.visibility_of_element_located((By.ID, "nameTextField")))
         self.clear_and_type(name_input, new_name)
 
-        # Нажать кнопку Save
+        # Click the Save button
         save_button = self.wait.until(EC.element_to_be_clickable((By.ID, "saveButton")))
         save_button.click()
 
-        # Подтвердить, что имя сохранено (можно использовать wait для оповещения или загрузки)
+        # Confirm that the name was saved (you can wait for a notification or a reload)
         self.wait.until(EC.text_to_be_present_in_element_value((By.ID, "nameTextField"), new_name))
 
     def open_ordering_tab(self, tab_name: str):
         """
         Click the ordering tab with the given name (e.g., "Suppliers", "Wholesalers", etc.)
         """
-        # XPath находит кнопку с нужным текстом внутри .v-btn
+        # XPath finds the button with the required text inside .v-btn
         xpath = f"//button[contains(@class, 'v-btn') and .//div[contains(text(), '{tab_name}')]]"
         tab_button = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
         tab_button.click()
 
     def select_supplier_from_dropdown(self, supplier_name: str):
-        # 1. Клик по input (через JS для обхода overlay)
+        # 1. Click the input via JS to bypass the overlay
         self.driver.execute_script("document.getElementById('supplierIntegrationDialogSupplierName').click();")
 
-        # 2. Ввод текста
+        # 2. Enter text
         input_field = self.wait.until(EC.element_to_be_clickable((By.ID, "supplierIntegrationDialogSupplierName")))
         input_field.clear()
         input_field.send_keys(supplier_name)
 
-        # # 3. Подождать появления выпадающего меню
+        # 3. Wait for the drop-down menu to appear
         option_xpath = f"//div[@role='option']//span[contains(text(), '{supplier_name}')]"
         option = self.wait.until(EC.element_to_be_clickable((By.XPATH, option_xpath)))
         option.click()
@@ -289,11 +289,11 @@ class PharmacyPage:
         """Add a supplier integration with default test data"""
         self.wait.until(EC.element_to_be_clickable(self.ADD_SUPPLIER_BUTTON)).click()
 
-        # Выбор поставщика из дропдауна
+        # Choose a supplier from the drop-down
 
         self.select_supplier_from_dropdown(supplier_name)
 
-        # Ввод остальных данных
+        # Enter the remaining data
         supplier_info_label = self.wait.until(EC.element_to_be_clickable((
             By.XPATH, "//div[contains(@class, 'text-subtitle-1') and text()='Supplier Info']"
         )))
@@ -309,12 +309,12 @@ class PharmacyPage:
         self.js_click_and_type(self.ACCOUNT_INPUT, "1234567")
         self.js_click_and_type(self.PASSWORD_INPUT, "password")
 
-        # Сохранить
+        # Save
         self.wait.until(EC.element_to_be_clickable(self.SAVE_BUTTON_INTEGRATION)).click()
 
     def should_see_enabled_integration(self, supplier_name: str):
         """
-        Проверить, что у поставщика указан статус Enabled.
+        Verify that the supplier has the status Enabled.
         """
         xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[div[contains(text(), '{supplier_name}')]]/following-sibling::td//div[contains(text(), 'Enabled')]"
         element = self.wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -323,21 +323,21 @@ class PharmacyPage:
 
     def delete_supplier_integration(self, supplier_name: str):
         """
-        Удалить интеграцию указанного поставщика.
+        Remove integration for the specified supplier.
         """
-        # Находим строку с нужным поставщиком
+        # Find the row with the desired supplier
         row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[div[contains(text(), '{supplier_name}')]]/parent::tr"
         row = self.wait.until(EC.presence_of_element_located((By.XPATH, row_xpath)))
 
-        # Внутри строки ищем кнопку удаления
+        # Inside the row, locate the delete button
         delete_button = row.find_element(By.XPATH, ".//button[starts-with(@id, 'removeSupplierIntegrationButton_3')]")
         delete_button.click()
 
     def js_click_and_type(self, by_locator: tuple, value: str):
         """
-        Кликает по элементу через JavaScript и вводит значение.
-        :param by_locator: кортеж локатора (By.ID, "some_id")
-        :param value: значение для ввода
+        Click an element via JavaScript and enter a value.
+        :param by_locator: locator tuple (By.ID, "some_id")
+        :param value: value to input
         """
         element = self.driver.find_element(*by_locator)
         self.driver.execute_script("arguments[0].click();", element)
@@ -350,12 +350,12 @@ class PharmacyPage:
         self.js_click_and_type(self.CONTACT_PHONE_2, phone_2),
         self.js_click_and_type(self.CONTACT_EMAIL_1, email_1)
         self.js_click_and_type(self.CONTACT_EMAIL_2, email_2)
-        # Сохранить
+        # Save
         self.wait.until(EC.element_to_be_clickable(self.SAVE_BUTTON)).click()
 
 
     def should_see_saved_contact_details(self, email_1: str, email_2: str, phone_1: str, phone_2: str):
-        """Проверка, что контактные данные были сохранены корректно"""
+        """Verify that the contact details were saved correctly"""
         phone_1_value = self.driver.find_element(*self.CONTACT_PHONE_1).get_attribute("value")
         phone_2_value = self.driver.find_element(*self.CONTACT_PHONE_2).get_attribute("value")
         email_1_value = self.driver.find_element(*self.CONTACT_EMAIL_1).get_attribute("value")
@@ -367,7 +367,7 @@ class PharmacyPage:
         assert email_2_value == email_2, f"Expected email 2 to be '{email_2}', but got '{email_2_value}'"
 
     def should_see_contact_validation_errors(self):
-        """Проверка, что отображаются ошибки валидации в контактных полях"""
+        """Verify that validation errors are displayed in the contact fields"""
 
         errors = {
             "phone1TextField-messages": "Phone is not valid",
@@ -384,18 +384,18 @@ class PharmacyPage:
             )
 
     def add_employee(self, email: str):
-        """Добавляет сотрудника по email"""
-        # 1. Нажимаем кнопку "Add Employee"
+        """Add an employee by email"""
+        # 1. Click the "Add Employee" button
         add_btn = self.wait.until(EC.element_to_be_clickable((By.ID, "addEmployeeButton")))
         add_btn.click()
 
-        # 2. Ждём появления строки с нужным email
+        # 2. Wait for the row with the desired email to appear
         self.wait.until(EC.presence_of_element_located((By.XPATH, "//tr[contains(@class, 'v-data-table__tr')]")))
         row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(., '{email}')]/parent::tr"
         row = self.wait.until(EC.element_to_be_clickable((By.XPATH, row_xpath)))
         row.click()
 
-        # 3. Нажимаем "Save"
+        # 3. Click "Save"
         save_btn = self.wait.until(EC.element_to_be_clickable((By.ID, "saveButton")))
         save_btn.click()
         self.should_see_success_message(expected="Pharmacy was updated")
@@ -405,29 +405,29 @@ class PharmacyPage:
         assert expected in message.text, f"Expected message '{expected}', but got '{message.text}'"
 
     def should_see_employee(self, email: str):
-        """Проверяет, что сотрудник с указанным email отображается в таблице"""
+        """Check that an employee with the specified email is displayed in the table"""
         employee_row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]"
         self.wait.until(EC.visibility_of_element_located((By.XPATH, employee_row_xpath)),
-                        message=f"Сотрудник с email '{email}' не найден в списке")
+                        message=f"Employee with email '{email}' was not found in the list")
 
 
     def delete_employee(self, email: str):
-        """Удаляет сотрудника с указанным email"""
-        # Найти строку сотрудника по email
+        """Delete an employee with the specified email"""
+        # Find the employee row by email
         row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]/parent::tr"
         employee_row = self.wait.until(EC.visibility_of_element_located((By.XPATH, row_xpath)))
 
-        # Найти кнопку удаления внутри этой строки
+        # Locate the delete button inside this row
         delete_button = employee_row.find_element(By.XPATH, ".//button[starts-with(@id, 'removeEmployeeButton')]")
 
-        # Клик по кнопке удаления
+        # Click the delete button
         delete_button.click()
 
     def should_not_see_employee(self, email: str):
-        """Проверяет, что сотрудник с указанным email НЕ отображается в таблице"""
+        """Verify that an employee with the specified email is NOT displayed in the table"""
         employee_row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]"
         try:
             self.wait.until(EC.visibility_of_element_located((By.XPATH, employee_row_xpath)))
-            raise AssertionError(f"Сотрудник с email '{email}' не должен отображаться в таблице, но найден")
+            raise AssertionError(f"Employee with email '{email}' should not appear in the table, but was found")
         except TimeoutException:
-            pass  # Всё хорошо — элемент не найден
+            pass  # All good — element not found
