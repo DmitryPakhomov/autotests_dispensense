@@ -139,7 +139,7 @@ def test_add_employee_to_pharmacy(driver, login):
 
 
 @allure.title("Add employee to pharmacy")
-def test_add_employee_to_pharmacy(driver, login):
+def test_add_employee_and_delete_to_pharmacy(driver, login):
     base = BasePage(login.driver)
     base.open("pharmacies")
     employee = "234234@gmail.com"
@@ -152,3 +152,4 @@ def test_add_employee_to_pharmacy(driver, login):
     page.add_employee(employee)
     page.should_see_employee(employee)
     page.delete_employee(employee)
+    page.should_not_see_employee(employee)

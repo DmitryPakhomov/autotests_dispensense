@@ -53,6 +53,7 @@ class PharmacyPage:
     NAVI_ACCOUNT_INPUT = (By.ID, "naviAccount")
     EIRCODE_INPUT = (By.ID, "addressEirCode")
     SEARCH_INPUT = (By.ID, "searchTextField")
+    SUCCESS_MESSAGE = (By.ID, "notificationMessage")
 
     # --- Group and Save ---
     GROUP_SELECT = (By.ID, "pharmacyGroupsSelect")
@@ -389,7 +390,8 @@ class PharmacyPage:
         add_btn.click()
 
         # 2. Ждём появления строки с нужным email
-        row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]"
+        self.wait.until(EC.presence_of_element_located((By.XPATH, "//tr[contains(@class, 'v-data-table__tr')]")))
+        row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(., '{email}')]/parent::tr"
         row = self.wait.until(EC.element_to_be_clickable((By.XPATH, row_xpath)))
         row.click()
 
@@ -420,3 +422,12 @@ class PharmacyPage:
 
         # Клик по кнопке удаления
         delete_button.click()
+
+    def should_not_see_employee(self, email: str):
+        """Проверяет, что сотрудник с указанным email НЕ отображается в таблице"""
+        employee_row_xpath = f"//tr[contains(@class, 'v-data-table__tr')]//td[contains(text(), '{email}')]"
+        try:
+            self.wait.until(EC.visibility_of_element_located((By.XPATH, employee_row_xpath)))
+            raise AssertionError(f"Сотрудник с email '{email}' не должен отображаться в таблице, но найден")
+        except TimeoutException:
+            pass  # Всё хорошо — элемент не найден
