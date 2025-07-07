@@ -15,7 +15,7 @@ from pages.base_page import BasePage
 class PharmacyPage:
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(driver, 10)
+        self.wait = WebDriverWait(driver, 15)
 
     # test_data/pharmacy_data.py
 
@@ -210,21 +210,19 @@ class PharmacyPage:
 
     def open_pharmacy(self, name: str = "Alfa Pharmacy 1"):
         """
-        Find and click a pharmacy with the specified name
+        Открывает аптеку по имени, используя поле поиска
         """
-        group_locator = (By.XPATH, "//div[starts-with(@id, 'pharmacyName_')]")
-        elements = self.wait.until(EC.presence_of_all_elements_located(group_locator))
+        time.sleep(2)
+        # 1. Ввести имя в поле поиска
+        search_input = self.wait.until(EC.visibility_of_element_located((By.ID, "searchTextField")))
+        self.clear_and_type(search_input, name)
 
-        for el in elements:
-            try:
-                text = el.find_element(By.XPATH, ".//div").text.strip()
-                if text == name:
-                    el.click()
-                    return
-            except Exception:
-                continue
+        # 2. Подождать появления нужной строки
+        xpath = f"//div[starts-with(@id, 'pharmacyName_')]//div[contains(text(), '{name}')]"
+        pharmacy_el = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
-        raise AssertionError(f"Pharmacy '{name}' not found on the page.")
+        # 3. Клик по найденной аптеке
+        pharmacy_el.click()
 
     def select_from_dropdown(self, input_id: str, option_text: str, timeout: int = 10):
         wait = WebDriverWait(self.driver, timeout)

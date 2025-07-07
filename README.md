@@ -56,7 +56,7 @@ uv pip install -r requirements.txt
 ### ✅ Полный запуск:
 
 ```bash
-pytest --alluredir=allure-results
+pytest tests/ --alluredir=allure-results
 ```
 
 ### ✅ Запуск с открытием браузера (не headless):

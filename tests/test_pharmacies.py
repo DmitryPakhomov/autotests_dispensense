@@ -17,6 +17,7 @@ def test_create_pharmacy(driver, login):
     page.click_add_pharmacy()
     name = f"Test Pharmacy {int(time.time())}"
     page.create_pharmacy(name)
+    base.open("pharmacies")
     page.open_pharmacy(name)
     time.sleep(1)
     page.should_see_pharmacy(name)
@@ -31,6 +32,7 @@ def test_edit_pharmacy(driver, login):
     page.click_add_pharmacy()
     name = f"Test Pharmacy {int(time.time())}"
     page.create_pharmacy(name)
+    base.open("pharmacies")
     page.open_pharmacy(name)
     new_name = f"Test Pharmacy {int(time.time())}"
     page.edit_pharmacy(new_name)
@@ -86,6 +88,7 @@ def test_valid_pharmacy_contact(driver, login):
     page = PharmacyPage(driver)
     page.click_add_pharmacy()
     page.create_pharmacy(name)
+    base.open("pharmacies")
     page.open_pharmacy(name)
     page.open_ordering_tab("Contact Details")
     page.fill_contact_details(
@@ -113,6 +116,7 @@ def test_invalid_pharmacy_contact(driver, login):
     page = PharmacyPage(driver)
     page.click_add_pharmacy()
     page.create_pharmacy(name)
+    base.open("pharmacies")
     page.open_pharmacy(name)
     page.open_ordering_tab("Contact Details")
     page.fill_contact_details(
@@ -132,6 +136,7 @@ def test_add_employee_to_pharmacy(driver, login):
     page = PharmacyPage(driver)
     page.click_add_pharmacy()
     page.create_pharmacy(name)
+    base.open("pharmacies")
     page.open_pharmacy(name)
     page.open_ordering_tab("Employees")
     page.add_employee(employee)
@@ -147,6 +152,7 @@ def test_add_employee_and_delete_to_pharmacy(driver, login):
     page = PharmacyPage(driver)
     page.click_add_pharmacy()
     page.create_pharmacy(name)
+    base.open("pharmacies")
     page.open_pharmacy(name)
     page.open_ordering_tab("Employees")
     page.add_employee(employee)
